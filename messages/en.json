@@ -1,0 +1,55 @@
+{
+  "app": {
+    "name": "GPT Chat Clone",
+    "newChat": "New chat"
+  },
+  "header": {
+    "signIn": "Sign in",
+    "signOut": "Sign out"
+  },
+  "sidebar": {
+    "expand": "Expand sidebar",
+    "collapse": "Collapse sidebar"
+  },
+  "composer": {
+    "placeholder": "Write a message...",
+    "file": "File",
+    "send": "Send",
+    "tokenShort": "tok."
+  },
+  "messageList": {
+    "createChatPrompt": "Create a chat to start the conversation.",
+    "historyLoading": "Loading chat history...",
+    "olderLoading": "Loading older messages...",
+    "emptyTitle": "Start a new conversation",
+    "emptyDescription": "Ask a question or send a message, and I will help with an answer."
+  },
+  "auth": {
+    "title": "Sign in",
+    "emailPlaceholder": "Email",
+    "passwordPlaceholder": "Password",
+    "signIn": "Sign in",
+    "signUp": "Register",
+    "signupConfirm": "Check your email to confirm registration.",
+    "signInError": "Sign in failed",
+    "signUpError": "Sign up failed",
+    "close": "Close"
+  },
+  "errorDialog": {
+    "title": "Error",
+    "ok": "Got it"
+  },
+  "errors": {
+    "fallback": "Something went wrong. Please try again.",
+    "anonymousLimit": "You reached the daily anonymous limit. Sign in to continue.",
+    "quota": "The service is currently overloaded or out of quota. Please try again in a minute.",
+    "fileTooLarge": "File is too large. Maximum size: 10 MB.",
+    "chatNotFound": "Chat not found. Refresh the page and try again.",
+    "unauthorized": "Authorization required. Sign in and try again.",
+    "network": "Network issue. Check your internet connection and try again.",
+    "parseDocumentFallback": "Could not process the file. Supported formats: txt, md, doc, docx.",
+    "chatIdResolveFallback": "Failed to determine chat.",
+    "sendMessageFallback": "Could not send message. Please try again."
+  }
+}
+
