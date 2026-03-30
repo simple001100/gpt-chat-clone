@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ChatMessage } from "@/features/chat/types";
 
@@ -50,8 +51,14 @@ export function MessageList({
 
   if (!hasActiveChat) {
     return (
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
-        <p className="text-sm text-muted-foreground">{t("createChatPrompt")}</p>
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="mx-auto flex h-full max-w-2xl flex-col items-center justify-center text-center">
+          <p className="text-6xl leading-none">✨</p>
+          <h2 className="mt-4 text-4xl font-semibold tracking-tight text-foreground">
+            {t("emptyTitle")}
+          </h2>
+          <p className="mt-3 text-sm text-muted-foreground">{t("createChatPrompt")}</p>
+        </div>
       </div>
     );
   }
@@ -59,11 +66,11 @@ export function MessageList({
   if (historyLoading) {
     return (
       <div className="flex-1 overflow-y-auto p-6">
-        <div className="mx-auto grid max-w-2xl gap-3">
-          <div className="h-3 w-48 rounded-full bg-muted-foreground/25 animate-pulse" />
-          <div className="h-3 w-64 rounded-full bg-muted-foreground/20 animate-pulse [animation-delay:120ms]" />
-          <div className="h-3 w-40 rounded-full bg-muted-foreground/20 animate-pulse [animation-delay:240ms]" />
-          <p className="text-xs text-muted-foreground">{t("historyLoading")}</p>
+        <div className="mx-auto flex h-full max-w-2xl items-center justify-center">
+          <div className="inline-flex items-center rounded-full border border-border bg-background/80 px-4 py-2 text-sm text-muted-foreground shadow-sm">
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <span>...</span>
+          </div>
         </div>
       </div>
     );
