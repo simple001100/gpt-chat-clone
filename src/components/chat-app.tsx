@@ -37,6 +37,19 @@ import {
 } from "@/features/chat/client";
 import type { ContextDocument, UploadedFile } from "@/features/chat/types";
 
+function withFileMarker(content: string, documents: ContextDocument[]) {
+  if (!documents.length) {
+    return content;
+  }
+
+  if (documents.length === 1) {
+    return `${content}\n\n📎 Файл: ${documents[0].fileName}`;
+  }
+
+  const fileLines = documents.map((document) => `- ${document.fileName}`).join("\n");
+  return `${content}\n\n📎 Файлы:\n${fileLines}`;
+}
+
 export function ChatApp() {
   const tApp = useTranslations("app");
   const tSidebar = useTranslations("sidebar");
@@ -384,7 +397,14 @@ export function ChatApp() {
             try {
               const content = draft.trim();
               if (!content) return;
+
+              const attachmentsToSend = [...pendingFiles];
+              const documentsToSend = [...pendingDocuments];
+              const contentWithFileMarker = withFileMarker(content, documentsToSend);
+
               setDraft("");
+              setPendingFiles([]);
+              setPendingDocuments([]);
 
               let chatId = selectedChatId;
               if (!chatId) {
@@ -397,9 +417,9 @@ export function ChatApp() {
               }
               await sendMutation.mutateAsync({
                 chatId,
-                content,
-                attachments: pendingFiles,
-                contextDocuments: pendingDocuments,
+                content: contentWithFileMarker,
+                attachments: attachmentsToSend,
+                contextDocuments: documentsToSend,
               });
             } catch (submitError) {
               setError(

@@ -3,6 +3,8 @@
 import { useEffect, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import type { ChatMessage } from "@/features/chat/types";
 
 type MessageListProps = {
@@ -134,7 +136,54 @@ export function MessageList({
                   <div className="h-2.5 w-40 rounded-full bg-muted-foreground/20 animate-pulse [animation-delay:120ms]" />
                 </div>
               ) : (
-                message.content
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                    ul: ({ children }) => (
+                      <ul className="mb-2 list-disc pl-5 marker:text-current">{children}</ul>
+                    ),
+                    ol: ({ children }) => (
+                      <ol className="mb-2 list-decimal pl-5 marker:text-current">{children}</ol>
+                    ),
+                    li: ({ children }) => <li className="mb-1">{children}</li>,
+                    strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                    em: ({ children }) => <em className="italic">{children}</em>,
+                    code: ({ children, className }) => {
+                      const isInline = !className;
+                      if (isInline) {
+                        return (
+                          <code className="rounded bg-black/10 px-1 py-0.5 text-[0.92em] dark:bg-white/10">
+                            {children}
+                          </code>
+                        );
+                      }
+                      return (
+                        <code className="block overflow-x-auto rounded-xl bg-black/10 p-3 text-xs dark:bg-white/10">
+                          {children}
+                        </code>
+                      );
+                    },
+                    pre: ({ children }) => <pre className="mb-2 mt-2">{children}</pre>,
+                    a: ({ href, children }) => (
+                      <a
+                        href={href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="underline decoration-current/60 underline-offset-2"
+                      >
+                        {children}
+                      </a>
+                    ),
+                    blockquote: ({ children }) => (
+                      <blockquote className="mb-2 border-l-2 border-current/40 pl-3 italic">
+                        {children}
+                      </blockquote>
+                    ),
+                  }}
+                >
+                  {message.content}
+                </ReactMarkdown>
               )}
               {!!message.attachments?.length && (
                 <div className="mt-3 grid gap-2">
