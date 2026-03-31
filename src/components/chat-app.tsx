@@ -46,7 +46,9 @@ function withFileMarker(content: string, documents: ContextDocument[]) {
     return `${content}\n\n📎 Файл: ${documents[0].fileName}`;
   }
 
-  const fileLines = documents.map((document) => `- ${document.fileName}`).join("\n");
+  const fileLines = documents
+    .map((document) => `- ${document.fileName}`)
+    .join("\n");
   return `${content}\n\n📎 Файлы:\n${fileLines}`;
 }
 
@@ -325,7 +327,10 @@ export function ChatApp() {
         selectedChatId={selectedChatId}
         onSelectChat={(chatId) => {
           setActiveChatId(chatId);
-          if (typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches) {
+          if (
+            typeof window !== "undefined" &&
+            window.matchMedia("(max-width: 1023px)").matches
+          ) {
             setIsSidebarCollapsed(true);
           }
         }}
@@ -400,7 +405,10 @@ export function ChatApp() {
 
               const attachmentsToSend = [...pendingFiles];
               const documentsToSend = [...pendingDocuments];
-              const contentWithFileMarker = withFileMarker(content, documentsToSend);
+              const contentWithFileMarker = withFileMarker(
+                content,
+                documentsToSend,
+              );
 
               setDraft("");
               setPendingFiles([]);

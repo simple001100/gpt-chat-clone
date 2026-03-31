@@ -23,5 +23,5 @@ export function getGeminiApiKey() {
 }
 
 export function getGeminiDefaultModel() {
-  return process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  return "gemma-3-1b-it";
 }

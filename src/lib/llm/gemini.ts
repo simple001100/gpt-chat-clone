@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { getGeminiApiKey } from "@/lib/env";
+import { getGeminiApiKey, getGeminiDefaultModel } from "@/lib/env";
 import type { ChatRole } from "@/types/chat";
 
 export type GeminiMessage = {
@@ -11,15 +11,21 @@ type StreamCallbacks = {
   onToken: (token: string) => void;
 };
 
+type GeminiContentMessage = {
+  role: "model" | "user";
+  parts: Array<{ text: string }>;
+};
+
 const MOCK_LLM_RESPONSE =
   "Это тестовый ответ по умолчанию. Реальный запрос к LLM отключен.";
 const MOCK_CHAT_TITLE = "Тестовый чат";
+const MODELS_WITHOUT_SYSTEM_INSTRUCTION = new Set(["gemma-3-1b-it"]);
 
 function isMockLlmEnabled() {
   return process.env.MOCK_LLM === "true" || process.env.NODE_ENV === "test";
 }
 
-function toGeminiRole(role: ChatRole) {
+function toGeminiRole(role: ChatRole): GeminiContentMessage["role"] {
   return role === "assistant" ? "model" : "user";
 }
 
@@ -34,7 +40,7 @@ function getGoogleGenAiClient() {
 }
 
 function buildModelCandidates(preferredModel: string) {
-  const models = [preferredModel, "gemini-2.5-flash"];
+  const models = [preferredModel, getGeminiDefaultModel(), "gemini-2.5-flash"];
   return [...new Set(models)];
 }
 
@@ -43,10 +49,36 @@ function isQuotaOrRateError(error: unknown) {
   return text.includes("429") || text.includes("RESOURCE_EXHAUSTED");
 }
 
+function isDeveloperInstructionUnsupported(error: unknown) {
+  const text = error instanceof Error ? error.message : String(error);
+  return text.includes("Developer instruction is not enabled");
+}
+
+function shouldInlineSystemPrompt(model: string) {
+  return MODELS_WITHOUT_SYSTEM_INSTRUCTION.has(model.trim().toLowerCase());
+}
+
+function buildContentsWithInlinedSystemPrompt(
+  messages: GeminiContentMessage[],
+  systemPrompt: string,
+): GeminiContentMessage[] {
+  if (!systemPrompt) {
+    return messages;
+  }
+
+  return [
+    {
+      role: "user" as const,
+      parts: [{ text: `System instruction:\n${systemPrompt}` }],
+    },
+    ...messages,
+  ];
+}
+
 export async function streamGeminiResponse(
   messages: GeminiMessage[],
   callbacks: StreamCallbacks,
-  model = "gemini-2.5-flash",
+  model = getGeminiDefaultModel(),
 ) {
   if (isMockLlmEnabled()) {
     callbacks.onToken(MOCK_LLM_RESPONSE);
@@ -59,7 +91,7 @@ export async function streamGeminiResponse(
     .join("\n\n")
     .trim();
 
-  const chatMessages = messages
+  const chatMessages: GeminiContentMessage[] = messages
     .filter((item) => item.role !== "system")
     .map((item) => ({
       role: toGeminiRole(item.role),
@@ -70,13 +102,33 @@ export async function streamGeminiResponse(
 
   for (const candidateModel of buildModelCandidates(model)) {
     try {
-      const response = await ai.models.generateContentStream({
-        model: candidateModel,
-        contents: chatMessages,
-        ...(systemPrompt
-          ? { config: { systemInstruction: systemPrompt } }
-          : {}),
-      });
+      let response: Awaited<ReturnType<typeof ai.models.generateContentStream>>;
+      const inlineSystemPrompt = shouldInlineSystemPrompt(candidateModel);
+      const contents = inlineSystemPrompt
+        ? buildContentsWithInlinedSystemPrompt(chatMessages, systemPrompt)
+        : chatMessages;
+
+      try {
+        response = await ai.models.generateContentStream({
+          model: candidateModel,
+          contents,
+          ...(!inlineSystemPrompt && systemPrompt
+            ? { config: { systemInstruction: systemPrompt } }
+            : {}),
+        });
+      } catch (error) {
+        if (!isDeveloperInstructionUnsupported(error)) {
+          throw error;
+        }
+
+        response = await ai.models.generateContentStream({
+          model: candidateModel,
+          contents: buildContentsWithInlinedSystemPrompt(
+            chatMessages,
+            systemPrompt,
+          ),
+        });
+      }
 
       let fullText = "";
       for await (const chunk of response) {
@@ -100,7 +152,7 @@ export async function streamGeminiResponse(
 
 export async function generateGeminiChatTitle(
   messages: GeminiMessage[],
-  model = "gemini-2.5-flash",
+  model = getGeminiDefaultModel(),
 ) {
   if (isMockLlmEnabled()) {
     return MOCK_CHAT_TITLE;

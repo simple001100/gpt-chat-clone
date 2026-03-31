@@ -67,7 +67,10 @@ function normalizeAttachmentDtos(input: unknown): MessageAttachmentDTO[] {
 }
 
 function toMessageWithAttachmentsDto(
-  row: Pick<MessageRow, "id" | "chat_id" | "role" | "content" | "created_at"> & {
+  row: Pick<
+    MessageRow,
+    "id" | "chat_id" | "role" | "content" | "created_at"
+  > & {
     attachments?: unknown;
   },
 ): MessageWithAttachmentsDTO {
@@ -152,7 +155,7 @@ export async function listMessagesForChat(
   const hasMore = rows.length > limit;
   const pageRows = hasMore ? rows.slice(0, limit) : rows;
   const messages = [...pageRows].reverse();
-  const nextCursor = hasMore ? messages[0]?.created_at ?? null : null;
+  const nextCursor = hasMore ? (messages[0]?.created_at ?? null) : null;
 
   return { messages, hasMore, nextCursor };
 }
@@ -384,17 +387,13 @@ export async function autoRenameChatIfNeeded(
   }
 
   let nextTitle = fallbackTitleFromHistory(history);
-  try {
-    const generated = await generateGeminiChatTitle(
-      history.map((item) => ({ role: item.role, content: item.content })),
-      "gemini-2.5-flash",
-    );
-    const sanitized = sanitizeTitle(generated);
-    if (sanitized) {
-      nextTitle = sanitized;
-    }
-  } catch {
-    // Keep fallback title when model generation is unavailable.
+  const generated = await generateGeminiChatTitle(
+    history.map((item) => ({ role: item.role, content: item.content })),
+    getGeminiDefaultModel(),
+  );
+  const sanitized = sanitizeTitle(generated);
+  if (sanitized) {
+    nextTitle = sanitized;
   }
 
   if (!nextTitle || DEFAULT_CHAT_TITLES.has(nextTitle)) {
